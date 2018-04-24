@@ -1,0 +1,1035 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <title>Modele3d</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="css/base.css" />
+</head>
+<body>
+
+    <script src="js/Three.js"></script>
+    <script src="js/Detector.js"></script>
+    <script src="js/Stats.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/THREEx.KeyboardState.js"></script>
+    <script src="js/THREEx.WindowResize.js"></script>
+    <script src="js/jquery-1.9.1.js"></script>
+    <script src="js/jquery-ui.js"></script>
+    <script src="js/material.min.js"></script>
+    <script src="js/ripples.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/jquery-ui.css" />
+    <link rel="stylesheet" href="css/ripples.min.css" />
+    <link rel="stylesheet" href="css/material.min.css" />
+    <link rel="stylesheet" href="css/info.css" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <script src="js/info.js"></script>
+    <style>
+        #panel {
+            position: absolute;
+            width: 121px;
+            left: 40px;
+            top: 50px;
+            background: grey;
+        }
+
+        .suwak {
+            width: 119px;
+            height: 20px;
+            background: cadetblue;
+            border: 1px solid black;
+        }
+
+        .p {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            left: 20;
+            z-index: 2;
+            cursor: pointer;
+        }
+
+        #p0 {
+            background: red;
+        }
+
+        #p1 {
+            background: green;
+        }
+
+        #p2 {
+            background: blue;
+        }
+
+        #p3 {
+            background: white;
+        }
+
+        #p4 {
+            background: #0af8ff;
+        }
+
+        #p5 {
+            background: #77fb01;
+        }
+
+        #p6 {
+            display: none;
+        }
+
+        #suwak6 {
+            display: none;
+        }
+
+        #kompas2 {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 121px;
+            height: 121px;
+        }
+
+        #kompas_p {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            background: cadetblue;
+            top: -2px;
+            left: 47px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        #komp_koordy {
+            width: 120px;
+            height: 120px;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .nomark {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+    <div id="menu" style="border-left:50px solid; border-color: rgba(48, 155, 140, 0.7);">
+        <div id="container">
+            <h3>CONTROLS</h3>
+            <div id="panel">
+                <div id="suwaki" class="nomark">
+                    <div class="suwak" id="suwak0"><div class="p nomark" onmousedown="klik(0)" id="p0">R</div></div>
+                    <div class="suwak" id="suwak1"><div class="p nomark" onmousedown="klik(1)" id="p1">G</div></div>
+                    <div class="suwak" id="suwak2"><div class="p nomark" onmousedown="klik(2)" id="p2">B</div></div>
+                    <div class="suwak" id="suwak3"><div class="p nomark" onmousedown="klik(3)" id="p3">I</div></div>
+                    <div class="suwak" id="suwak4"><div class="p nomark" onmousedown="klik(4)" id="p4">X</div></div>
+                    <div class="suwak" id="suwak5"><div class="p nomark" onmousedown="klik(5)" id="p5">Y</div></div>
+                    <div class="suwak" id="suwak6"><div class="p nomark" onmousedown="klik(6)" id="p6">Z</div></div>
+                </div>
+            </div>
+            <hr style="margin-top:150px;" />
+            <button class="btn btn-primary btn-raised" onclick="clone()">Add clones</button><br />
+            <button class="btn btn-primary btn-raised" onclick="cloneRemove()">Remove clones</button><br />
+            <button class="btn btn-primary btn-raised" onclick="add_light()">Add light </button><br />
+            <button class="btn btn-primary btn-raised" onclick="rem_light()">Remove light</button><br />
+            <hr />
+            <h3>ANIMATIONS</h3>
+        </div>
+    </div>
+    <div id="kompas2" class="nomark"><canvas id="kompas"></canvas></div>
+    <div id="kompas_p" class="nomark" onmousedown="komp_klik()"></div>
+
+
+    <div id="ThreeJS"></div>
+    <script>
+        $.material.init()
+
+        ///////////
+        // SCENE //
+        ///////////
+        scene = new THREE.Scene();
+
+
+        ///////////
+        // FLOOR //
+        ///////////
+
+        var FloorGeometry = new THREE.PlaneBufferGeometry(512, 512);
+
+        var materialFloor = new THREE.MeshPhongMaterial(
+        {
+            map: THREE.ImageUtils.loadTexture("img/texture2.jpg"),
+            specular: 0xffffff,
+            shininess: 60,
+            shading: THREE.SmoothShading,
+        });
+
+        var floor = new THREE.Mesh(FloorGeometry, materialFloor);
+        floor.rotateX(-Math.PI / 2);
+        floor.material.map.repeat.set(16, 16);
+        floor.material.map.wrapS = floor.material.map.wrapT = THREE.RepeatWrapping;
+        scene.add(floor);
+        setTimeout(function () {
+            selectAnimation('stand');
+
+        }, 500)
+
+
+        //////////
+        // MENU //
+        //////////
+        var clicked = false;
+        var renderer2 = false;
+        var uiHidden = false;
+        var comp_drag = false;
+        var moveUp;
+        var rotationConst = ((Math.PI) * 2 / 180)
+        var controlLeft;
+        var controlRight;
+        var controlUp;
+        var controlDown;
+        var cam_mov = [0, 0, 0];
+        var menucontent = document.getElementById("container")
+        document.getElementById("menu").addEventListener("click", animMenu, false);
+        var tab_clone = [];
+        var clones;
+        var camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+        var lastLight = -1;
+       
+        var suwaki = [];
+        suwaki[0] = 0;
+        suwaki[1] = 0;
+        suwaki[2] = 0;
+        suwaki[3] = 0;
+        suwaki[4] = 0;
+
+        var light_v = [];
+        light_v[0] = 0;
+        light_v[1] = 0;
+        light_v[2] = 0;
+        light_v[3] = 0;
+
+        var color = "0xffffff";
+        var col_prop = [];
+        col_prop[0] = 1;
+        col_prop[1] = 1;
+        col_prop[2] = 1;
+        col_prop[3] = 1;
+        col_prop[4] = 1;
+        col_prop[5] = 1;
+        col_prop[6] = 1;
+
+        var cir_points_x = [];
+        var cir_points_y = [];
+
+        function animMenu() {
+
+            if (!clicked) {
+
+                document.getElementById("menu").style.right = 0 + 'px';
+
+                clicked = !clicked
+
+            } else {
+
+                document.getElementById("menu").style.right = -200 + 'px';
+
+                clicked = !clicked
+
+            }
+        }
+
+        var lights = [];
+
+        function rem_light() {
+		scene.remove(lights[lights.length -1]);
+		lights.pop();
+		lastLight = lights.length - 1;
+		
+          //  for (var i = 0; i < lights.length; i++) {
+          //      if (lights[i].name == "l_holder") {
+          //          scene.remove(lights[i]);
+			//		lastLight = lights.length - 1;
+          //      }
+          //  } 
+        }
+        function add_light() {
+
+            floor.material.needsUpdate = true;
+            l_holder = new THREE.Object3D();
+            l_holder.name = "l_holder";
+            var mater = new THREE.MeshBasicMaterial({color: "white", wireframe: true})
+            var sphereGeo = new THREE.SphereGeometry(4, 8, 8)
+            var sphereMesh = new THREE.Mesh(sphereGeo, mater);
+            var spotLight = new THREE.SpotLight(("rgb(123,123,0)"), 0);
+            spotLight.add(sphereMesh);
+            spotLight.target = floor;
+            l_holder.add(spotLight);
+            scene.add(l_holder);
+            lights.push(l_holder);
+            l_holder.position.set(0, 1, 0);
+            for (var i = 0; i < col_prop.length; i++) {
+               document.getElementById("p" + i).style.left = 0;
+                col_prop[i] = 1;
+            }
+			lastLight = lights.length - 1;
+
+            //l_holder = new THREE.Object3D();
+            //l_holder.name = "l_holder";
+            //var material2 = new THREE.MeshLambertMaterial({ color: "yellow" });
+            //material2.wireframe = true;
+            //sphere = new THREE.Mesh(new THREE.SphereGeometry(4, 8, 8), material2);
+            
+            //sphere.position.set(0, 4, 0);
+            //spotLight = new THREE.SpotLight(("rgb(123,123,0)"), 0);
+            //spotLight.target = meshModel;
+            //l_holder.add(spotLight);
+            //spotLight.add(sphere)
+            //spotLight.position.set(1,5, 1);
+            //for (var i = 0; i < col_prop.length; i++) {
+            //    document.getElementById("p" + i).style.left = 0;
+            //    col_prop[i] = 1;
+            //}
+            //scene.add(l_holder);
+            //lights.push(l_holder);
+            //l_holder.position.set(0, 1, 0);
+        }
+
+        ctx = document.getElementById("kompas").getContext("2d");
+
+        ctx.width = 100;
+        ctx.height = 100;
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.arc(60, 60, 50, 0, 2 * Math.PI, false);
+        ctx.stroke();
+        ctx.closePath();
+        ctx.fillText("N", 55, 10);
+        ctx.fillText("E", 110, 60);
+        ctx.fillText("S", 55, 120);
+        ctx.fillText("W", 0, 60);
+        var tx, ty;
+        tx = -50;
+        ty = 0;
+        for (var i = 0; i < 314; i++) {
+
+            cir_points_x[i] = 60 + parseInt(50 * Math.sin(i / 50));
+            cir_points_y[i] = 60 + parseInt(50 * Math.cos(i / 50));
+
+        }
+        function rot_comp(val) {
+            ctx.clearRect(0, 0, 200, 200);
+            ctx.translate(60, 60);
+            ctx.rotate(val);
+
+
+            ctx.translate(-60, -60);
+
+            ctx.beginPath();
+            ctx.arc(60, 60, 50, 0, 2 * Math.PI, false);
+            ctx.fillText("N", 60, 10);
+            ctx.fillText("E", 110, 60);
+            ctx.fillText("S", 55, 120);
+            ctx.fillText("W", 0, 60);
+
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+
+        var czy_posuwany = false;
+        var px, py;
+        var ppos = 0;
+        var prev_x, prev_y;
+        prev_x = 0;
+        prev_y = 0;
+        var last_d;
+        var cir_id = 0;
+        var prev_xxx = 0;
+        var prev_yyy = 0;
+        var prev_xx = 0;
+        var prev_yy = 0;
+        var prev_id = 146;
+        var r_val = 0;
+
+        document.onmousemove = function (e) {
+            x = e.pageX;
+            y = e.pageY;
+
+            cir_id = 0;
+            if (comp_drag) {
+                var lowest_d = 100;
+                cir_id = 0;
+                for (var i = 0; i < cir_points_x.length; i++) {
+                    var tmp_d = Math.sqrt(Math.pow((x - cir_points_x[i]), 2) + Math.pow((y - cir_points_y[i]), 2));
+                    if (lowest_d > tmp_d) {
+
+                        lowest_d = tmp_d;
+                        cir_id = tmp_d;
+                        prev_xxx = cir_points_x[i];
+                        prev_yyy = cir_points_y[i];
+                        cir_id = i;
+                    }
+                }
+
+                r_val = Math.abs(cir_id - prev_id);
+
+                r_val = r_val / Math.PI / 16;
+                if (l_holder != undefined) {
+                    if (x > 60 && y < 60) {
+                        if (x > prev_x || y > prev_y) {
+
+                            l_holder.rotateY(r_val);
+                        }
+                        else {
+
+                            l_holder.rotateY(-r_val);
+                        }
+                    }
+                    else if (x > 60 && y >= 60) {
+                        if (x < prev_x || y > prev_y) {
+
+                            l_holder.rotateY(r_val);
+                        }
+                        else {
+
+                            l_holder.rotateY(-r_val);
+                        }
+                    }
+                    else if (x <= 60 && y >= 60) {
+                        if (x < prev_x || y < prev_y) {
+
+                            l_holder.rotateY(r_val);
+                        }
+                        else {
+
+                            l_holder.rotateY(-r_val);
+                        }
+                    }
+                    else if (x <= 60 && y < 60) {
+                        if (x > prev_x || y < prev_y) {
+
+                            l_holder.rotateY(r_val);
+                        }
+                        else {
+
+                            l_holder.rotateY(-r_val);
+                        }
+                    }
+                }
+
+
+                prev_x = x;
+                prev_y = y;
+                prev_xx = prev_xxx;
+                prev_yy = prev_yyy;
+                prev_id = cir_id;
+
+                document.getElementById("kompas_p").style.left = (prev_xx - 15) + "px";
+                document.getElementById("kompas_p").style.top = (prev_yy - 15) + "px";
+
+            }
+
+            for (var i = 0; i < suwaki.length; i++) {
+                if (suwaki[i] == 1) {
+                    if (!czy_posuwany) {
+                        px = e.pageX;
+                        czy_posuwany = true;
+                        if (document.getElementById("p" + i).style.left == "") {
+                            ppos = 0;
+                        }
+                        else {
+                            ppos = parseInt(document.getElementById("p" + i).style.left.substring(0, document.getElementById("p" + i).style.left.length - 2));
+
+                        }
+
+                    }
+                    else {
+                        if ((x - (px - ppos)) < 101 && (x - (px - ppos)) > 0) {
+                            document.getElementById("p" + i).style.left = (x - (px - ppos)) + "px";
+                            //console.log(ppos - px);
+
+                            var c_pos = parseInt((x - (px - ppos)) * 2.55)
+
+                            /*if(i == 0){
+                            spotLight.color.r = c_pos;
+                            }*/
+                            if (i == 3) {
+                                col_prop[i] = c_pos / 100;
+                                lights[0].children[0].intensity = col_prop[3];
+                            }
+                            else if (i >= 4 && i <= 6) {
+                                col_prop[i] = c_pos / 10;
+                            }
+                            else {
+                                col_prop[i] = c_pos;
+                            }
+                        }
+                  
+					if(lastLight > -1){
+						lights[lastLight].children[0].color.r = col_prop[0]
+						lights[lastLight].children[0].color.g = col_prop[1]
+						lights[lastLight].children[0].color.b = col_prop[2]
+						lights[lastLight].children[0].intensity = col_prop[3]
+						lights[lastLight].children[0].position.x = col_prop[4]
+						lights[lastLight].children[0].position.y = col_prop[5]
+					}
+                        lights[0].children[0].color.r = col_prop[0];
+                        lights[0].children[0].color.g = col_prop[1];
+                        lights[0].children[0].color.b = col_prop[2];
+
+                        //spotLight.position.x = col_prop[4];
+                        
+                        l_holder.children[0].position.x = col_prop[4];
+                        l_holder.position.y = col_prop[5];
+                        //spotLight.position.z = col_prop[6];
+                        l_holder.children[0].position.z = col_prop[6];
+                        //console.log("POSUWANY " + x + " - " + px + " - " + ppos + " = " + ((x - px) - ppos));
+                    }
+                }
+            }
+        }
+
+        function klik(h) {
+            suwaki[h] = 1;
+        }
+
+        document.onmouseup = function (e) {
+            for (var i = 0; i < suwaki.length; i++) {
+                suwaki[i] = 0;
+                czy_posuwany = false;
+                //px = 0;
+            }
+            comp_drag = false;
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+
+        function komp_klik() {
+            comp_drag = true;
+        }
+
+        function clone() {
+
+
+            if (tab_clone.length > 0) {
+
+                for (i = 0; i < 4 ; i++) {
+                    var clone = meshModel.clone();
+                    tab_clone.push(clone);
+                }
+
+                tab_clone[tab_clone.length - 4].position.x = tab_clone[tab_clone.length - 8].position.x + 100;
+                tab_clone[tab_clone.length - 3].position.x = tab_clone[tab_clone.length - 7].position.x - 100;
+                tab_clone[tab_clone.length - 2].position.z = tab_clone[tab_clone.length - 6].position.z + 100;
+                tab_clone[tab_clone.length - 1].position.z = tab_clone[tab_clone.length - 5].position.x - 100;
+
+
+                scene.add(tab_clone[tab_clone.length - 4]);
+                scene.add(tab_clone[tab_clone.length - 3]);
+                scene.add(tab_clone[tab_clone.length - 2]);
+                scene.add(tab_clone[tab_clone.length - 1]);
+
+            } else {
+
+                for (i = 0; i < 4 ; i++) {
+                    var clone = meshModel.clone();
+                    tab_clone.push(clone);
+                }
+
+                tab_clone[i - 4].position.x = 100;
+                tab_clone[i - 3].position.x = -100;
+                tab_clone[i - 2].position.z = 100;
+                tab_clone[i - 1].position.z = -100;
+
+                scene.add(tab_clone[i - 4]);
+                scene.add(tab_clone[i - 3]);
+                scene.add(tab_clone[i - 2]);
+                scene.add(tab_clone[i - 1]);
+            }
+        }
+
+        function cloneRemove() {
+
+            for (var i = 0; i < tab_clone.length; i++) {
+                ////usuwanie
+
+                scene.remove(tab_clone[i - 4]);
+                scene.remove(tab_clone[i - 3]);
+                scene.remove(tab_clone[i - 2]);
+                scene.remove(tab_clone[i - 1]);
+                scene.remove(tab_clone[i]);
+
+
+            }
+            tab_clone = [];
+        }
+        //////////
+        // MAIN //
+        //////////
+
+
+        var container, scene, camera, renderer, controls, stats;
+        var keyboard = new THREEx.KeyboardState();
+        var clock = new THREE.Clock();
+
+        var tablica = [];
+        var cube;
+        init();
+        animate();
+
+        ///////////////
+        // FUNCTIONS //
+        ///////////////
+
+        function selectAnimation(value) {
+
+            if (meshModel != null) {
+                meshModel.parseAnimations();
+
+                meshModel.playAnimation(value, 5);
+                var box = new THREE.Box3().setFromObject(meshModel);
+
+            }
+            if (meshModelHead != null) {
+                meshModelHead.parseAnimations();
+
+                meshModelHead.playAnimation(value, 5);
+                var box = new THREE.Box3().setFromObject(meshModelHead);
+            }
+            if (meshModelWeapon != null) {
+                meshModelWeapon.parseAnimations();
+
+                meshModelWeapon.playAnimation(value, 5);
+                var box = new THREE.Box3().setFromObject(meshModelWeapon);
+            }
+
+        }
+
+        function selectAnimationClone(value) {
+
+          
+                tab_clone[tab_clone.length - 1].parseAnimations();
+                tab_clone[tab_clone.length - 1].playAnimation(value, 5);
+                var box = new THREE.Box3().setFromObject(tab_clone[tab_clone.length - 1]);
+
+            
+
+        }
+
+        function init() {
+
+            ////////////
+            // CAMERA //
+            ////////////
+
+            var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+            var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+
+            camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+
+            scene.add(camera);
+            camera.position.set(0, 150, 400);
+            camera.lookAt(scene.position);
+
+            //////////////
+            // RENDERER //
+            //////////////
+
+            if (Detector.webgl)
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+            else
+                renderer = new THREE.CanvasRenderer();
+
+            renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+            renderer.autoClear = false;
+            container = document.getElementById('ThreeJS');
+            container.appendChild(renderer.domElement);
+
+            ////////////
+            // EVENTS //
+            ////////////
+            THREEx.WindowResize(renderer, camera);
+
+            //////////////
+            // CONTROLS //
+            //////////////
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+            ///////////
+            // STATS //
+            ///////////
+
+            stats = new Stats();
+            container.appendChild(stats.domElement);
+
+            //////////////
+            // GEOMETRY //
+            //////////////
+
+            var axes = new THREE.AxisHelper(100);
+            scene.add(axes);
+
+            var cam_holder = new THREE.Object3D();
+            scene.add(cam_holder);
+            cam_holder.position.set(0, 1, 0);
+            cam_holder.add(camera);
+
+            /////////
+            // SKY //
+            /////////
+
+            var skyBoxGeometry = new THREE.BoxGeometry(10000, 10000, 10000);
+            var skyBoxMaterial = new THREE.MeshPhongMaterial({ color: 0x191970, side: THREE.BackSide });
+            var skyBox = new THREE.Mesh(skyBoxGeometry, skyBoxMaterial);
+            scene.add(skyBox);
+
+
+            var ambient = new THREE.AmbientLight(0xdfdfdf);
+            scene.add(ambient);
+
+            //////////
+            // MODEL //
+            ///////////
+
+            var loader = new THREE.JSONLoader();
+            loader.load('models/spos_body.js', function (geometry, mat) {
+                geometry.computeMorphNormals();
+
+                //mat.morphNormals = true;
+
+                var mat = new THREE.MeshPhongMaterial(
+                {
+                    map: THREE.ImageUtils.loadTexture("models/spos_body.png"),
+                    morphTargets: true,
+                    morphNormals: true,
+                    specular: 0xffffff,
+                    shininess: 60,
+                    shading: THREE.SmoothShading,
+                    vertexColors: THREE.FaceColors
+
+                });
+
+                meshModel = new THREE.MorphAnimMesh(geometry, mat);
+                meshModel.name = "meshModel";
+                meshModel.rotation.y = (Math.PI / 2)
+
+                if (meshModel != null) {
+                    meshModel.parseAnimations();
+                    for (var key in meshModel.geometry.animations) {
+
+                        if (key === 'length' || !meshModel.geometry.animations.hasOwnProperty(key)) continue;
+                        tablica.push(key);
+                    }
+
+                    meshModel.playAnimation(tablica[1], 5);
+                    var box1 = new THREE.Box3().setFromObject(meshModel);
+
+                }
+                // menucontent.innerHTML = ""
+                for (var i = 0; i < tablica.length; i++) {
+
+                    menucontent.innerHTML += "<button onclick='selectAnimation(this.innerHTML)' class='btn btn-primary btn-raised'>" + tablica[i] + "</button><br/>"
+
+                }
+
+                meshModel.add(camera2);
+                camera2.translateX(70);
+                camera2.translateY(80)
+                camera2.lookAt(meshModel.position);
+
+                scene.add(meshModel);
+
+            });
+
+            //////////
+            // MODEL GLOWA//
+            ///////////
+
+            var loader = new THREE.JSONLoader();
+            loader.load('models/spos_head.js', function (HeadGeometry, mat) {
+                HeadGeometry.computeMorphNormals();
+
+                var mat = new THREE.MeshPhongMaterial(
+                {
+                    map: THREE.ImageUtils.loadTexture("models/spos_head1.png"),
+                    morphTargets: true,
+                    morphNormals: true,
+                    specular: 0xffffff,
+                    shininess: 60,
+                    shading: THREE.SmoothShading,
+                    vertexColors: THREE.FaceColors
+                });
+
+                meshModelHead = new THREE.MorphAnimMesh(HeadGeometry, mat);
+                meshModelHead.name = "meshModelHead";
+                meshModelHead.rotation.y = (Math.PI / 2)
+
+                scene.add(meshModelHead);
+
+
+            });
+            //////////
+            // MODEL bron//
+            ///////////
+
+            var loader = new THREE.JSONLoader();
+            loader.load('models/spos_weapon.js', function (WeaponGeo, mat) {
+                WeaponGeo.computeMorphNormals();
+
+
+
+                var mat = new THREE.MeshPhongMaterial(
+                {
+                    map: THREE.ImageUtils.loadTexture("models/spos_weapon.png"),
+                    morphTargets: true,
+                    morphNormals: true,
+                    specular: 0xffffff,
+                    shininess: 60,
+                    shading: THREE.SmoothShading,
+                    vertexColors: THREE.FaceColors
+
+                });
+                meshModelWeapon = new THREE.MorphAnimMesh(WeaponGeo, mat);
+                meshModelWeapon.name = "meshModelWeapon";
+                meshModelWeapon.rotation.y = (Math.PI / 2)
+
+                scene.add(meshModelWeapon);
+
+            });
+
+         
+            document.addEventListener("keydown", onKeyDown, false);
+            document.addEventListener("keyup", onKeyUp, false);
+
+
+            function onKeyDown(event) {
+
+                var keyCode = event.which;
+                switch (keyCode) {
+
+                    case 87:
+                        moveUp = true
+                        selectAnimation('run')
+                        break;
+                    case 76:
+                        if (mainLight) {
+                            scene.remove(ambient);
+                        }
+                        else {
+                            scene.add(ambient);
+                        }
+
+                        mainLight = !mainLight;
+                        break;
+                    case 70:
+                        renderer.autoClear = false;
+                        renderer2 = !renderer2;
+                        break;
+                    case 37:
+                        controlLeft = true;
+                        break;
+                    case 38:
+
+                        controlUp = true;
+                        break;
+                    case 39:
+
+                        controlRight = true;
+                        break;
+                    case 40:
+
+                        controlDown = true;
+                        break;
+                }
+
+            } var mainLight = true;
+
+            function onKeyUp(event) {
+                var keyCode = event.which;
+                switch (keyCode) {
+                    case 87:
+                        moveUp = false
+                        selectAnimation('stand')
+                        break;
+                    case 77:
+                        if (!uiHidden) {
+
+                            document.getElementById("menu").style.display = 'none';
+                            document.getElementById("kompas2").style.display = 'none';
+                            document.getElementById("kompas_p").style.display = 'none';
+                            uiHidden = !uiHidden
+
+                        } else {
+
+                            document.getElementById("menu").style.display = 'block';
+                            document.getElementById("kompas2").style.display = 'block';
+                            document.getElementById("kompas_p").style.display = 'block';
+                            uiHidden = !uiHidden
+
+                        }
+                        break;
+                    case 37:
+                        controlLeft = false;
+                        break;
+                    case 38:
+
+                        controlUp = false;
+                        break;
+                    case 39:
+
+                        controlRight = false;
+                        break;
+                    case 40:
+                        controlDown = false;
+                        break;
+
+                }
+
+            }
+            cam_holder.rotateY(cam_mov[1]);
+
+            if (cam_mov[1] != 0) {
+                rot_comp(cam_mov[1]);
+            }
+
+            if (camera.position.z > 0.2) {
+                camera.translateZ(cam_mov[2]);
+            }
+            else {
+                if (cam_mov[2] != 0) {
+                    camera.position.z = 0.200001;
+                    cam_mov[2] = 0;
+                }
+            }
+            camera.translateY(cam_mov[0]);
+
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+        }
+
+        function animate() {
+
+            if (controlLeft) {
+                var x = camera.position.x;
+                var z = camera.position.z;
+                camera.position.x = x * Math.cos(rotationConst) - z * Math.sin(rotationConst);
+                camera.position.z = z * Math.cos(rotationConst) + x * Math.sin(rotationConst);
+                rot_comp(rotationConst);
+            }
+            if (controlRight) {
+                var x = camera.position.x;
+                var z = camera.position.z;
+                camera.position.x = x * Math.cos(rotationConst) + z * Math.sin(rotationConst);
+                camera.position.z = z * Math.cos(rotationConst) - x * Math.sin(rotationConst);
+                rot_comp(-rotationConst);
+            }
+
+            if (controlUp) camera.position.y += 2;
+            if (controlDown) camera.position.y -= 2;
+
+
+            if (renderer2) {
+
+                renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+                renderer.render(scene, camera2);
+                camera2.updateProjectionMatrix();
+                camera.aspect = window.innerWidth / 2 / window.innerHeight;
+
+                renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
+                renderer.render(scene, camera);
+                camera.updateProjectionMatrix();
+                camera2.aspect = window.innerWidth / 2 / window.innerHeight;
+            }
+            else {
+                renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                renderer.render(scene, camera);
+                camera.updateProjectionMatrix();
+            }
+
+            var delta = clock.getDelta();
+            requestAnimationFrame(animate);
+            if (meshModel != null) {
+                meshModel.updateAnimation(delta * 1000);
+            }
+            if (meshModelHead != null) {
+                meshModelHead.updateAnimation(delta * 1000);
+            }
+            if (meshModelWeapon != null) {
+                meshModelWeapon.updateAnimation(delta * 1000);
+            }
+            if (moveUp) {
+
+                if (meshModel != null) {
+                    meshModel.updateAnimation(delta * 1000);
+                }
+                if (meshModelHead != null) {
+                    meshModelHead.updateAnimation(delta * 1000);
+                }
+                if (meshModelWeapon != null) {
+                    meshModelWeapon.updateAnimation(delta * 1000);
+                }
+            }
+
+            render();
+            update();
+
+        }
+        function update() {
+
+            for (var i = 0; i < tab_clone.length; i++) {
+                if (tab_clone[i].position.distanceTo(meshModel.position) < 4) {
+
+                    var mat = new THREE.MeshBasicMaterial({
+                        morphTargets: true, //konieczne do animacji
+                        morphNormals: true, //konieczne animacji
+                        specular: 0xffffff,
+                        shininess: 60,
+                        shading: THREE.SmoothShading,
+                        vertexColors: THREE.FaceColors,
+                        wireframe: true,
+                        color: "yellow"
+                    });
+
+                    mat.needsUpdate = true;
+
+                    tab_clone[i].material = mat;
+                }
+            }
+
+            var delta = clock.getDelta();
+
+            if (keyboard.pressed("w")) {
+                meshModel.translateX(-1)
+                meshModelHead.translateX(-1)
+                meshModelWeapon.translateX(-1)
+            }
+
+            if (keyboard.pressed("a")) {
+                meshModel.rotation.y += 0.03;
+                meshModelHead.rotation.y += 0.03;
+                meshModelWeapon.rotation.y += 0.03;
+            }
+            if (keyboard.pressed("d")) {
+                meshModel.rotation.y -= 0.03;
+                meshModelHead.rotation.y -= 0.03;
+                meshModelWeapon.rotation.y -= 0.03;
+            }
+            controls.update();
+            stats.update();
+        }
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+
+</body>
+
+</html>

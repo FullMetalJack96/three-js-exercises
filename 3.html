@@ -1,0 +1,417 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Układ słoneczny</title>
+    <script src="js/three.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #menu {
+            z-index: 999;
+            background: cadetblue;
+            position: absolute;
+            right: -90px;
+            width:100px;
+            height:100%;
+            margin-top:0;
+            top: 0;
+             -webkit-transition: all 0.5s ease-in-out;
+            list-style-type: none;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #menu li:hover{
+            cursor: pointer;
+            
+        }
+
+          #menu:hover{
+             right: 0;
+        }
+
+        #menu li{
+            display: block;
+            margin: 10px 0;
+        }
+        #nowy {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="nowy"></div>
+    <ul id="menu">
+        <li>Słońce</li>
+        <li>Merkury</li>
+        <li>Wenus</li>
+        <li>Ziemia</li>
+        <li>Mars</li>
+        <li>Jowisz</li>
+        <li>Saturn</li>
+        <li>Uran</li>
+        <li>Neptun</li>
+    </ul>
+
+   
+
+    <script type="text/javascript">
+        var id_planety = 0;
+        var gora = 0, dol = 0, lewo = 0, prawo = 0;
+        var przyblizenie=false, oddalenie=false;
+        var predkosc_ziemi = 0.00365;
+        var rozmiar_orbity_ziemi = 2000;
+        var obrot_ziemi = 0.024;
+        var rozmiar_ziemi = 80;
+        var sledzenie = true;
+        var meshe_planet = [];
+        var meshe_orbit = [];
+        var zoom;
+         var camera, scene, particles, geom, materials = [], parameters, i, h, color, size;
+
+        
+
+
+
+        var planety = [];
+
+
+        planety.push({
+            nazwa: "Slonce",
+            rozmiar: 6 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(6 * rozmiar_ziemi, 128, 128),
+            position: { x: 0, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/sun.png") })],
+            rotation: obrot_ziemi / 50,
+            orbitSpeed: 0,
+            orbitSize: 0
+        }, {
+            nazwa: "Merkury",
+            rozmiar: 0.4 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(0.4 * rozmiar_ziemi, 128, 128),
+            position: { x: 0.4 * rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/merkury.jpg") })],
+            rotation: obrot_ziemi / 60,
+            orbitSpeed: predkosc_ziemi / 0.25,
+            orbitSize: rozmiar_orbity_ziemi * 0.4
+        }, {
+            nazwa: "wenus",
+            rozmiar: 0.95 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(0.95 * rozmiar_ziemi, 128, 128),
+            position: { x: 0.7 * rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/wenus.jpg") })],
+            rotation: obrot_ziemi / 200,
+            orbitSpeed: predkosc_ziemi / 0.6,
+            orbitSize: rozmiar_orbity_ziemi * 0.7
+        }, {
+            nazwa: "ziemia",
+            rozmiar: rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(rozmiar_ziemi, 128, 128),
+            position: { x: rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/earth.png") })],
+            rotation: obrot_ziemi,
+            orbitSpeed: predkosc_ziemi,
+            orbitSize: rozmiar_orbity_ziemi
+        }, {
+            nazwa: "mars",
+            rozmiar: 0.5 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(0.5 * rozmiar_ziemi, 128, 128),
+            position: { x: 1.2 * rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/mars.jpg") })],
+            rotation: obrot_ziemi * 2,
+            orbitSpeed: predkosc_ziemi / 2,
+            orbitSize: rozmiar_orbity_ziemi * 1.2
+        }, {
+            nazwa: "jowisz",
+            rozmiar: 11 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(11 * rozmiar_ziemi, 128, 128),
+            position: { x: 3 * rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/jowisz.jpg") })],
+            rotation: obrot_ziemi / 5,
+            orbitSpeed: predkosc_ziemi / 11,
+            orbitSize: rozmiar_orbity_ziemi * 3
+        }, {
+            nazwa: "saturn",
+            rozmiar: 9.5 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(9.5 * rozmiar_ziemi, 128, 128),
+            position: { x: 7 * rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/saturn.jpg") })],
+            rotation: obrot_ziemi * 1.4,
+            orbitSpeed: predkosc_ziemi / 25,
+            orbitSize: rozmiar_orbity_ziemi * 7
+        }, {
+            nazwa: "uran",
+            rozmiar: 4 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(4 * rozmiar_ziemi, 128, 128),
+            position: { x: 9 * rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/uran.jpg") })],
+            rotation: obrot_ziemi,
+            orbitSpeed: predkosc_ziemi / 80,
+            orbitSize: rozmiar_orbity_ziemi * 9
+        }, {
+            nazwa: "neptun",
+            rozmiar: 3.8 * rozmiar_ziemi,
+            geometry: new THREE.SphereGeometry(3.8 * rozmiar_ziemi, 128, 128),
+            position: { x: 10.6 * rozmiar_orbity_ziemi, z: 0 },
+            texture: [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("img/neptun.jpg") })],
+            rotation: obrot_ziemi / 1.2,
+            orbitSpeed: predkosc_ziemi / 165,
+            orbitSize: rozmiar_orbity_ziemi * 10.6
+        });
+
+        window.addEventListener("load", function () {
+            var renderer = new THREE.WebGLRenderer();
+            renderer.setSize($(window).width(), $(window).height());
+            document.getElementById('nowy').appendChild(renderer.domElement);
+            var scene = new THREE.Scene(); 
+            var camera = new THREE.PerspectiveCamera( 
+                80, 
+                $(window).width() / $(window).height(), 
+                0.1,
+                65535 
+                );
+            zoom=camera.zoom;
+            camera.position.x = 0;
+            camera.position.y = 0;
+            camera.position.z = 0;
+            camera.zoom=0.9;
+           
+            var nieboGeometry = new THREE.SphereGeometry(50000, 256, 256);
+            nieboTexture = [new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: THREE.ImageUtils.loadTexture("mats/stars.jpg") })];
+            var nieboFaceMaterial = new THREE.MeshFaceMaterial(nieboTexture);
+            var skybox = new THREE.Mesh(nieboGeometry, nieboFaceMaterial);
+            skybox.position.set(0, 0, 0);
+            scene.add(skybox);
+
+            var vectorPoint = new THREE.Vector3(0, 0, 0);
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+            
+            dodaj_planety();
+            
+            scene.updateMatrixWorld(true);
+     
+            document.addEventListener("keydown", onKeyDown, false); 
+            document.addEventListener("keyup", onKeyUp, false); 
+
+            function onKeyDown(event) {
+                var keyCode = event.which;
+                switch (keyCode) {
+                        case 40:
+                            //dol
+                            dol = 12;
+                            break;
+                        case 37:
+                            //lewo
+                            lewo = 4;
+                            break;
+                        case 38:
+                            //gora
+                            gora = 12;
+                            break;
+                        case 39:
+                            //prawo
+                            prawo = 4;
+                            break;
+                        case 87:
+                            przyblizenie=true;
+                            break;
+                        case 83:
+                            oddalenie=true;
+                            break;  
+                    }
+                sledzenie = false;
+            }
+
+            function onKeyUp(event) {
+                var keyCode = event.which;
+                switch (keyCode) {
+                    case 40:
+                        //dol
+                        dol = 0;
+                        break;
+                    case 37:
+                        //lewo
+                        lewo = 0;
+                        break;
+                    case 38:
+                        //gora
+                        gora = 0;
+                        break;
+                    case 39:
+                        //prawo
+                        prawo = 0;
+                        break;
+                    case 87:
+                        przyblizenie=false;
+                        break;
+                    case 83:
+                        oddalenie=false;
+                        break; 
+                }
+            }
+            function init() {
+
+
+
+
+                geom = new THREE.Geometry();
+
+                for (i = 0; i < 4000; i++) {
+
+                    var vertex = new THREE.Vector4();
+                    vertex.x = Math.random() * 3000;
+                    vertex.y = Math.random() * -3000;
+                    vertex.z = Math.random() * 3000;
+                    geom.vertices.push(vertex);
+                }
+
+                parameters = [
+                    [[0.3, 1, 0.2], 1],
+                    [[0.3, 1, 0.2], 1],
+                    [[0.3, 1, 0.2], 1],
+                    [[0.3, 1, 0.2], 1],
+                    [[0.3, 1, 0.2], 1],
+                    [[0.3, 1, 0.2], 1],
+                    [[0.3, 1, 0.2], 1],
+                ];
+
+                for (i = 0; i < parameters.length; i++) {
+
+                    size = parameters[i][1];
+
+                    materials[i] = new THREE.PointCloudMaterial({ size: size });
+
+                    particles = new THREE.PointCloud(geom, materials[i]);
+
+                    particles.rotation.x = Math.random() * 2;
+                    particles.rotation.y = Math.random() * 2;
+                    particles.rotation.z = Math.random() * 1;
+
+                    scene.add(particles);
+                }
+
+            }
+            init()
+            function animate() {
+
+
+
+                var time = Date.now() * 0.0000005;
+                camera.lookAt(scene.position);
+
+                for (i = 0; i < scene.children.length; i++) {
+
+                    var object = scene.children[i];
+
+                    if (object instanceof THREE.PointCloud) {
+
+                        object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1));
+
+                    }
+
+                }
+
+                for (i = 0; i < materials.length; i++) {
+
+                    //    color = parameters[i][0];
+
+                    //    h = (360 * (color[1] + time) % 360) / 360;
+                    materials[i].color.setHSL(55, 100, 51, 1);
+
+                }
+                camera.position.y += dol;
+
+
+
+                camera.position.y -= gora;
+                if(lewo==4)
+                {
+                    var x = camera.position.x;
+                    var z = camera.position.z;
+                    camera.position.x = x * Math.cos(0.05) - z * Math.sin(0.05);
+                    camera.position.z = z * Math.cos(0.05) + x * Math.sin(0.05); 
+                }
+                else if(prawo==4)
+                {
+                    var x = camera.position.x;
+                    var z = camera.position.z;
+                    camera.position.x = x * Math.cos(0.05) + z * Math.sin(0.05);
+                    camera.position.z = z * Math.cos(0.05) - x * Math.sin(0.05);    
+                }
+                if(przyblizenie==true)
+                    camera.zoom+=0.01;
+                else if(oddalenie==true)
+                    camera.zoom-=0.01;
+               
+                poruszaj_planetami();
+                sledz_planete();
+               
+                camera.lookAt(new THREE.Vector3().setFromMatrixPosition(meshe_planet[id_planety].matrixWorld));
+                camera.updateProjectionMatrix();
+                camera.updateMatrixWorld(true);
+                renderer.render(scene, camera);
+                
+                requestAnimationFrame(animate);
+            }
+            
+            function dodaj_planety(){
+                for (i = 0; i < planety.length; i++) {
+                    var orbit = new THREE.Object3D();
+                    var kula = new THREE.Mesh(planety[i].geometry, new THREE.MeshFaceMaterial(planety[i].texture));
+                    kula.position.set(planety[i].position.x, 0, planety[i].position.z);
+                   
+                    if(planety[i].nazwa != "Slonce") {
+                        var orbita = new THREE.TorusGeometry(planety[i].orbitSize, 1, 64, 128);
+                        var material = new THREE.MeshBasicMaterial({ color: new THREE.Color("#f6f6f6") });
+                        var orbita2 = new THREE.Mesh(orbita, material);
+                        orbita2.rotateX(Math.PI / 2);
+                        orbit.add(orbita2);
+                    }
+
+                    meshe_planet.push(kula);
+                    meshe_orbit.push(orbit);
+                    orbit.add(kula);
+                    scene.add(orbit);
+                }
+            }
+
+            function sledz_planete(){
+                if(sledzenie==true){
+                    camera.position.setFromMatrixPosition(meshe_planet[id_planety].matrixWorld);
+                    camera.position.setZ(camera.position.z + (2 * planety[id_planety].rozmiar));
+                    camera.position.setY(2 * planety[id_planety].rozmiar);
+                }
+            }
+
+            function poruszaj_planetami(){
+                for (i = 0; i < meshe_planet.length; i++) {
+                    meshe_planet[i].rotateY(-planety[i].rotation);
+                    meshe_orbit[i].rotateY(-planety[i].orbitSpeed);
+                }
+            }
+            
+            $("#menu").on("click", "li", function () {
+                camera.zoom=zoom;
+                var index = $(this).index();
+                id_planety = index;
+                vectorPoint = new THREE.Vector3(planety[id_planety].position.x, 0, 0);
+                sledzenie = true;
+            })
+
+            animate();
+
+        }); 
+
+    </script>
+</body>
+</html>

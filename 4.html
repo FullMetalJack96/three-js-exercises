@@ -1,0 +1,309 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>LIGHTS 3JS</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <script src="js/three.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var raycaster = new THREE.Raycaster();
+        var mouseVect = new THREE.Vector2();
+        var rot = false, vis = true;
+        var moveUp = false
+        var moveDown = false;
+        var moveLeft = false;
+        var moveRight = false;
+        var moveFront = false;
+        var moveBack = false;
+        var vertObj = new THREE.Object3D();
+        var scene = new THREE.Scene();
+        var editedVertId = -1;
+        var moveSpeed = 1;
+        var zoom = false;
+        var availableGeos = [];
+        function onLoad() {
+            var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 10000);
+            var renderer = new THREE.WebGLRenderer();
+            renderer.setSize(width, height);
+            renderer.setClearColor(0xffffff);
+            availableGeos = [
+                new THREE.BoxGeometry(24, 32, 32, 1, 1, 1),
+                new THREE.PlaneGeometry(32, 32, 1, 1),
+                new THREE.TetrahedronGeometry(32),
+                new THREE.SphereGeometry(32, 4, 4),
+                new THREE.CylinderGeometry(),
+                new THREE.DodecahedronGeometry(32)
+            ]
+
+            var objGeometry = availableGeos[0];
+            var objFaceMaterial = new THREE.MeshPhongMaterial({
+                color: 0x0f0f0f,
+                specular: 0xffffff,
+                shininess: 50,
+                side: THREE.DoubleSide
+            });
+
+            var vertObj = new THREE.Object3D();
+            var objMesh = new THREE.Mesh(objGeometry, objFaceMaterial);
+            objMesh.geometry.dynamic = true;
+            objMesh.geometry.verticesNeedUpdate = true;
+            objMesh.geometry.normalsNeedUpdate = true;
+            vertObj.add(objMesh);
+
+            var vertices = [];
+            vertices = objGeometry.vertices;
+
+            var vertGeo = new THREE.BoxGeometry(2, 2, 2, 1, 1, 1);
+            var vertGeoSel = new THREE.SphereGeometry(2, 8, 8, 8);
+            var verticesMat = new THREE.MeshBasicMaterial({ color: 0x3399FF, side: THREE.DoubleSide });
+            var vertMatSel = new THREE.MeshBasicMaterial({ color: 0xFFFF00, side: THREE.DoubleSide });
+
+            for (var i = 0; i < vertices.length; i++) {
+                var vertMesh = new THREE.Mesh(vertGeo, verticesMat);
+                vertMesh.matrixWorldNeedsUpdate = true;
+                vertMesh.position.x = vertices[i].x;
+                vertMesh.position.y = vertices[i].y;
+                vertMesh.position.z = vertices[i].z;
+                vertMesh.name = "vertex" + i;
+                vertObj.add(vertMesh);
+            }
+
+            scene.autoUpdate = true;
+            scene.add(vertObj);
+
+
+            camera.position.x = -64;
+            camera.position.y = 0;
+            camera.position.z = 0;
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+            var spotlightRed = new THREE.SpotLight(0xff0000, 2, 192);
+            spotlightRed.position.set(-64, 0, 0);
+            spotlightRed.lookAt(new THREE.Vector3(0, 0, 0));
+            scene.add(spotlightRed);
+
+            var spotlightGreen = new THREE.SpotLight(0x00ff00, 2, 192);
+            spotlightGreen.position.set(-64, 0, 0);
+            spotlightGreen.lookAt(new THREE.Vector3(0, 0, 0));
+            scene.add(spotlightGreen);
+
+            var spotlightBlue = new THREE.SpotLight(0x0000ff, 2, 192);
+            spotlightBlue.position.set(-64, 0, 0);
+            spotlightBlue.lookAt(new THREE.Vector3(0, 0, 0));
+            scene.add(spotlightBlue);
+
+            scene.updateMatrixWorld(true);
+            document.querySelector("#threeScene").appendChild(renderer.domElement);
+
+
+            function animateScene() {
+                if (editedVertId != -1 && !isNaN(editedVertId)) {
+                    console.log(editedVertId);
+                    var editedObj = scene.getObjectByName("vertex" + editedVertId);
+                    if (moveUp) editedObj.position.y += moveSpeed;
+                    if (moveDown) editedObj.position.y -= moveSpeed;
+                    if (moveLeft) editedObj.position.z -= moveSpeed;
+                    if (moveRight) editedObj.position.z += moveSpeed;
+                    if (moveFront) editedObj.position.x += moveSpeed;
+                    if (moveBack) editedObj.position.x -= moveSpeed;
+
+                    objMesh.geometry.vertices[editedVertId] = editedObj.position;
+                    objMesh.geometry.verticesNeedUpdate = true;
+                    objMesh.geometry.normalsNeedUpdate = true;
+                }
+
+
+                if (rot) vertObj.rotateY(Math.PI / 360);
+                camera.zoom = document.getElementById("zoom").value / 50;
+                camera.updateProjectionMatrix();
+                camera.updateMatrixWorld(true);
+                objMesh.visible = vis;
+
+          
+                renderer.render(scene, camera);
+
+                requestAnimationFrame(animateScene);
+
+            }
+
+            animateScene();
+
+
+            function switchRotation() { rot = !rot; }
+            function switchVisibility() { vis = !vis; }
+
+
+
+            document.getElementById('geometrySel').addEventListener("change", switchGeometry, false);
+            document.getElementById('checkVisible').addEventListener("click", switchVisibility, false);
+            document.getElementById('checkRotate').addEventListener("click", switchRotation, false);
+            document.getElementById('lightRed').addEventListener("change", changeLight, false);
+            document.getElementById('lightGreen').addEventListener("change", changeLight, false);
+            document.getElementById('lightBlue').addEventListener("change", changeLight, false);
+
+
+
+
+            function changeLight() {
+                var red = document.querySelector("#lightRed").value;
+                var green = document.querySelector("#lightGreen").value;
+                var blue = document.querySelector("#lightBlue").value;
+
+                spotlightRed.position.set(red * -1, 0, 0);
+                spotlightGreen.position.set(green * -1, 0, 0);
+                spotlightBlue.position.set(blue * -1, 0, 0);
+
+                scene.updateMatrixWorld(true);
+            }
+
+            function resetVertices() {
+                for (var j = 0; j < vertices.length; j++) {
+                    vertObj.remove(scene.getObjectByName("vertex" + j));
+                }
+
+                vertices = [];
+                vertices = objMesh.geometry.vertices;
+
+                for (var i = 0; i < vertices.length; i++) {
+                    var vertMesh = new THREE.Mesh(vertGeo, verticesMat);
+                    vertMesh.matrixWorldNeedsUpdate = true;
+                    vertMesh.position.x = vertices[i].x;
+                    vertMesh.position.y = vertices[i].y;
+                    vertMesh.position.z = vertices[i].z;
+                    vertMesh.name = "vertex" + i;
+                    vertObj.add(vertMesh);
+                }
+
+            }
+
+            function onKeyDown(event) {
+                var keyCode = event.which;
+
+                switch (keyCode) {
+                    case 87:
+                        moveBack = true;
+                        break;
+                    case 83:
+                        moveFront = true;
+                        break;
+                    case 65:
+                        moveLeft = true;
+                        break;
+                    case 68:
+                        moveRight = true;
+                        break;
+                    case 81:
+                        moveUp = true;
+                        break;
+                    case 90:
+                        moveDown = true;
+                        break;
+                }
+            }
+
+            function onKeyUp(event) {
+                moveUp = false;
+
+                moveDown = false;
+
+                moveBack = false;
+
+                moveFront = false;
+
+                moveLeft = false;
+
+                moveRight = false;
+
+            }
+
+            function onDocumentMouseDown(e) {
+                mouseVect.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouseVect.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouseVect, camera);
+
+                var intersects = raycaster.intersectObjects(vertObj.children, false);
+                if (intersects.length > 0) {
+                    clearVerticesMaterial();
+                    switchVertexMaterial(intersects[0].object.name);
+                    editedVertId = parseInt(intersects[0].object.name.substr(6));
+                } else {
+                    clearVerticesMaterial();
+                    editedVertId = -1;
+                }
+
+            }
+
+            function clearVerticesMaterial() {
+                resetVertices();
+            }
+
+            function switchVertexMaterial(name) {
+                if (name.substr(0, 6) == "vertex") {
+                    scene.getObjectByName(name).geometry = vertGeoSel;
+                    scene.getObjectByName(name).material = vertMatSel;
+                }
+            }
+
+            function switchGeometry(e) {
+                var id = e.target.value;
+                vertObj.remove(objMesh);
+                objMesh = new THREE.Mesh(availableGeos[id], objFaceMaterial);
+                vertObj.add(objMesh);
+                resetVertices();
+            }
+
+            document.addEventListener("mousedown", onDocumentMouseDown, false);
+            document.addEventListener("keydown", onKeyDown, false);
+            document.addEventListener("keyup", onKeyUp, false);
+        }
+
+        window.addEventListener("load", onLoad, false);
+    </script>
+</head>
+<body>
+    <div id="threeScene"></div>
+    <div id="menu">
+        <div id="content">
+            <h2>BRYŁA</h2><br />
+            <select id="geometrySel">
+                <option value="0">Prostopadłościan</option>
+                <option value="1">Powierzchnia</option>
+                <option value="2">Czworościan</option>
+                <option value="3">Kula</option>
+                <option value="4">Cylinder</option>
+                <option value="5">Tetrahedron</option>
+            </select>
+            <br /><br />
+            <button id="checkRotate" >Obrót</button><br />
+            <button id="checkVisible" >Widoczność</button><br />
+
+            
+            <br />
+            <h4>RED</h4> <br />
+                <input style="position:absolute; left:70px;" type="range" id="lightRed" min="16" max="128" step="1" value="96" />
+           
+            <br />
+           
+            <h4>GREEN</h4><br />
+            <input style="position:absolute; left:70px;" type="range" id="lightGreen" min="16" max="128" step="1" value="96" />
+            
+            <br />
+            
+            <h4>BLUE</h4><br />
+            <input style="position:absolute; left:70px;" type="range" id="lightBlue" min="16" max="128" step="1" value="96" />
+            
+            <br />
+           
+               <h4>Zoom</h4> <br />
+            <input style="position:absolute; left:70px;" type="range" id="zoom" min="0" max="100" step="1" value="50" />
+            
+
+        </div>
+    </div>
+</body>
+</html>

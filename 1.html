@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>ThreeJS1</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Dosis:500' rel='stylesheet' type='text/css'>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family:"Dosis";
+        }
+
+
+        #menu {
+            position: absolute;
+            width: 300px;
+            height: 100%;
+            left: -250px;
+            background-color: cadetblue;
+            -webkit-transition: all 0.5s ease-in-out;
+            transition: left 0.5s;
+            text-align: center;
+            margin:0 auto;
+            padding:0;
+        }
+
+        #content {
+            width: 82%;
+        }
+
+        #menu:hover {
+            left: 0;
+        }
+        #fpsCounter {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+            height: auto;
+        }
+        #scaleDiv {
+        width:100%;
+        }
+        #rotationDiv {
+            width: 100%;
+        }
+        #colorDiv {
+            width: 100%;
+        }
+        #menuStrip {
+        width:50px;
+        height:100%;
+        position:absolute;
+        right:0;
+        background-color:#4645a7;
+        }
+        hr {
+        width:100%;
+        padding:0;
+        }
+        #strzala {
+            position: relative;
+            top: 45%;
+            padding:5px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="menu"><div id="menuStrip"><i class="fa fa-arrow-right fa-3x" id="strzala"></i></div>
+        <div id="content">
+            <div id="scaleDiv"><br /><span style="font-weight:bold;">SKALOWANIE</span><br /><hr />
+                <label>Camera FOV</label><br /><input id="fovRange" type="range" min="30" max="150" value="90" /><br />
+                <label>Object scale</label><br /><input id="scaleRange" type="range" min="10" max="100" value="30" step="1" /><br />
+            </div><br />
+            <div id="rotationDiv"><hr /><span style="font-weight:bold;">OBRACANIE</span><br /><hr />
+                <label>Object rotationX</label><br /><input id="rotateX" type="range" value="1" min="0" max="33" /><br />
+                <label>Object rotationY</label><br /><input id="rotateY" type="range" value="0" min="0" max="33" /><br />
+                <label>Object rotationZ</label><br /><input id="rotateZ" type="range" value="0" min="0" max="33" /><br />
+          </div><br />
+            <div id="colorDiv"><hr /><span style="font-weight:bold;">KOLOROWANIE</span><br /><hr />
+                <label>RED</label><br /><input id="colorR" type="range" value="0" min="0" max="255" /><br />
+                <label>GREEN</label><br /><input id="colorG" type="range" value="0" min="0" max="255" /><br />
+                <label>BLUE</label><br /><input id="colorB" type="range" value="0" min="0" max="255" />
+            </div><br />
+            
+            <form><hr /><span style="font-weight:bold;">WYBÓR KSZTAŁTÓW</span><hr /><br />
+                <select id="meshSelector"></select>
+            </form>
+        </div>
+    </div>
+    <div id="fpsCounter"></div>
+    <script src="js/three.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="http://mrdoob.github.io/three.js/examples/fonts/helvetiker_regular.typeface.js"></script>
+    <script>
+        var stats = new Stats();
+        stats.setMode(2);
+
+        document.getElementById("fpsCounter").appendChild(stats.domElement);
+
+        var geometryArray = [];
+        var meshSelector = document.getElementById("meshSelector");
+
+        geometryArray.push(new THREE.SphereGeometry(50, 20, 20));
+        geometryArray.push(new THREE.CubeGeometry(50, 50, 50, 5, 5, 5));
+        geometryArray.push(new THREE.CylinderGeometry());
+        geometryArray.push(new THREE.TorusGeometry());
+        geometryArray.push(new THREE.CircleGeometry())
+        geometryArray.push(new THREE.DodecahedronGeometry())
+        geometryArray.push(new THREE.OctahedronGeometry())
+        geometryArray.push(new THREE.ParametricGeometry())
+        geometryArray.push(new THREE.PlaneGeometry())
+        geometryArray.push(new THREE.RingGeometry())
+        geometryArray.push(new THREE.TetrahedronGeometry())
+        geometryArray.push(new THREE.TorusKnotGeometry())
+        geometryArray.push(new THREE.TextGeometry("WITAM"))
+        geometryArray.push(new THREE.TubeGeometry(new THREE.LineCurve(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 100, 100)), 20, 4, 4, false));
+
+        for (var i = 0; i < geometryArray.length; i++) {
+            meshSelector.innerHTML += " <option value=" + i + ">" + geometryArray[i].type + "</option>"
+        }
+
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        var material = new THREE.MeshBasicMaterial({
+            color: 0x00ff00, side: THREE.DoubleSide, wireframe: true
+        });
+        var color = 0x000000;
+
+        function changeColor() {
+            var colorRed = document.getElementById("colorR").value;
+            var colorGreen = document.getElementById("colorG").value;
+            var colorBlue = document.getElementById("colorB").value;
+            color = new THREE.Color("rgb(" + colorRed + "," + colorGreen + "," + colorBlue + ")");
+            document.getElementById("menu").style.backgroundColor = "rgb(" + (255 - colorRed) + "," + (255 - colorGreen) + "," + (255 - colorBlue) + ")"
+            document.getElementById("menuStrip").style.backgroundColor = "rgb(" + (128 - colorRed) + "," + (128 - colorGreen) + "," + (128 - colorBlue) + ")"
+            document.getElementById("menu").style.color = "rgb(" + colorRed + "," + colorGreen + "," + colorBlue + ")"
+            material.setValues({
+                color: new THREE.Color("rgb(" + (255 - colorRed) + "," + (255 - colorGreen) + "," + (255 - colorBlue) + ")")
+            });
+        }
+
+        function chooseMesh(e) {
+            var object = e.target;
+            var selectedItem = object.value;
+            scene.remove(mesh);
+            mesh = new THREE.Mesh(geometryArray[selectedItem], material);
+            scene.add(mesh);
+        }
+
+        var mesh = new THREE.Mesh(geometryArray[0], material);
+        scene.add(mesh);
+        camera.position.z = 200;
+        camera.position.x = -200;
+        camera.position.y = 200;
+        camera.lookAt(mesh.position)
+
+    
+
+        document.querySelector("#meshSelector").addEventListener("change", chooseMesh, false);
+        document.querySelector("#colorR").addEventListener("change", changeColor, false);
+        document.querySelector("#colorG").addEventListener("change", changeColor, false);
+        document.querySelector("#colorB").addEventListener("change", changeColor, false);
+        stats.begin();
+        var render = function () {
+            renderer.clear(true, false, false);
+            renderer.setClearColor(color);
+            stats.update();
+            var scale = parseInt(document.getElementById("scaleRange").value) / 10;
+            mesh.scale.set(scale, scale, scale)
+            camera.fov = parseInt(document.getElementById("fovRange").value)
+            camera.updateProjectionMatrix();
+            requestAnimationFrame(render);
+            mesh.rotation.y += parseInt(document.getElementById("rotateY").value) / 100;
+            mesh.rotation.x += parseInt(document.getElementById("rotateX").value) / 100;
+            mesh.rotation.z += parseInt(document.getElementById("rotateZ").value) / 100;
+            renderer.render(scene, camera);
+
+}; render(); </script>
+
+</body>
+</html>
